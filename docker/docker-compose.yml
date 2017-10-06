@@ -1,0 +1,14 @@
+version : '3.1'
+
+services:
+
+  postgres:
+    image: "postgres:9.6.5"
+    container_name: "postgres"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: testDB
+      POSTGRES_PASSWORD: test
+      POSTGRES_USER: test
+
