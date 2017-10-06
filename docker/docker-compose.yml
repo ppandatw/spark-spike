@@ -11,4 +11,31 @@ services:
       POSTGRES_DB: testDB
       POSTGRES_PASSWORD: test
       POSTGRES_USER: test
+  spark-master:
+    image: bde2020/spark-master:2.2.0-hadoop2.7
+    container_name: spark-master
+    hostname: spark-master
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    volumes:
+      - ../build:/usr/build
+      - spark:/spark
+    environment:
+      - INIT_DAEMON_STEP=setup_spark
+      - "constraint:node==spark-master"
+  spark-worker:
+    image: bde2020/spark-worker:2.2.0-hadoop2.7
+    container_name: spark-worker
+#    deploy:
+#      replicas: 2
+    links:
+      - spark-master
+    ports:
+      - "8081:8081"
+    environment:
+      - "SPARK_MASTER=spark://spark-master:7077"
+      - "constraint:node==spark-master"
+volumes:
+  spark: {}
 
