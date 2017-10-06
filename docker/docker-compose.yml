@@ -11,6 +11,7 @@ services:
       POSTGRES_DB: testDB
       POSTGRES_PASSWORD: test
       POSTGRES_USER: test
+
   spark-master:
     image: bde2020/spark-master:2.2.0-hadoop2.7
     container_name: spark-master
@@ -24,6 +25,7 @@ services:
     environment:
       - INIT_DAEMON_STEP=setup_spark
       - "constraint:node==spark-master"
+
   spark-worker:
     image: bde2020/spark-worker:2.2.0-hadoop2.7
     container_name: spark-worker
@@ -36,6 +38,25 @@ services:
     environment:
       - "SPARK_MASTER=spark://spark-master:7077"
       - "constraint:node==spark-master"
+
+  spark-batchjob-1:
+    image: java:8-jre
+#    restart: on-failure
+    container_name: spark-batchjob-1
+    ports:
+      - "4000:4000"
+    links:
+      - spark-master
+      - spark-worker
+    volumes:
+      - ../build:/usr/build
+      - ../src/main/resources:/src/main/resources
+      - spark:/spark-master/spark
+      - ./spark-scripts:/spark-scripts
+    environment:
+      - "MAIN_CLASS=spark.spike.Main"
+    command: bash -C /spark-scripts/submit_job.sh
+
 volumes:
   spark: {}
 
