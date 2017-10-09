@@ -10,6 +10,7 @@ import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
 import scala.Tuple3;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,7 +18,7 @@ public class Main {
   public static void main(String[] args) throws ClassNotFoundException {
     SparkConf sparkConf =
         new SparkConf()
-            .setAppName("Square Batch job")
+            .setAppName("Job - " + new Date())
             .setMaster("spark://spark-master:7077");//	.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
 
     SQLContext sqlContext = SparkSession
