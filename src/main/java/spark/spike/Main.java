@@ -8,6 +8,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
+import scala.Tuple3;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +28,7 @@ public class Main {
     Map<String, String> options = new HashMap<>();
     options.put("url", "jdbc:postgresql://postgres:5432/testDB?user=test&password=test");
     options.put("driver", "org.postgresql.Driver");
-    options.put("dbtable", "ord_rev");
+    options.put("dbtable", "monthly_revenue");
 
     Dataset<Row> rowDataset = sqlContext
         .read()
@@ -36,14 +37,27 @@ public class Main {
         .load();
 
     JavaRDD<Row> rowJavaRDD = rowDataset.javaRDD();
-    long count = rowJavaRDD.count();
-    System.out.println("Number of rows in the view : " + count);
 
     rowJavaRDD.mapToPair(row -> {
-      String customer = "customer - " + row.getString(0) + "::" + row.getString(1);
-      return new Tuple2<>(customer, row.getDouble(3));
+      Tuple3<String, String, String> key = new Tuple3<>(row.getString(0), row.getString(1), row.getString(3));
+      Double value = row.getDouble(5);
+      return new Tuple2<>(key, value);
     })
-        .reduceByKey(Math::max)
+        .reduceByKey(Double::sum)
+        .mapToPair(tuple -> {
+          Tuple3<String, String, String> oldKey = tuple._1();
+          Double sumAmount = tuple._2();
+
+          Tuple2<String, String> newKey = new Tuple2<>(oldKey._1(), oldKey._2());
+          Tuple2<String, Double> newValue = new Tuple2<>(oldKey._3(), sumAmount);
+          return new Tuple2<>(newKey, newValue);
+        })
+        .reduceByKey((x, y) -> x._2() > y._2() ? x : y)
+        .map(result -> "customer_no = " + result._1()._1() + ", "
+            + "store_no = " + result._1()._2() + ", "
+            + "department = " + result._2()._1() + ", "
+            + "amount = " + result._2()._2()
+        )
         .collect()
         .forEach(System.out::println);
   }
