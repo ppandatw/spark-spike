@@ -27,23 +27,13 @@ public class Main {
         .sparkContext(new SparkContext(sparkConf))
         .getOrCreate()
         .sqlContext();
-    Map<String, String> options = new HashMap<>();
-    options.put("url", "jdbc:postgresql://postgres:5432/testDB?user=test&password=test");
-    options.put("driver", "org.postgresql.Driver");
-    options.put("dbtable", "monthly_revenue");
-
-//    Dataset<Row> rowDataset = sqlContext
-//        .read()
-//        .format("jdbc")
-//        .options(options)
-//        .load();
 
     Dataset<Row> rowDataset = sqlContext
         .read()
-            .jdbc(options.get("url"),
-                    options.get("dbtable"),
-            "(ctid::text::point)[0]::bigint",
-                    0, 168208, 170,
+            .jdbc("jdbc:postgresql://postgres:5432/testDB?user=test&password=test",
+                    "monthly_revenue",
+                    "id",
+                    0, 11764704, 100,
                     new Properties(){{
                         setProperty("driver", "org.postgresql.Driver");
                         setProperty("fetchSize", "1000");
