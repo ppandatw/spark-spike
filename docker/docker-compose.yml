@@ -13,6 +13,8 @@ services:
     container_name: "postgres"
     ports:
       - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: testDB
       POSTGRES_PASSWORD: test

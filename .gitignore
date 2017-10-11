@@ -32,3 +32,6 @@ local.properties
 
 out/
 .DS_Store
+
+
+docker/postgres_data
