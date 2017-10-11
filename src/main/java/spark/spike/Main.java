@@ -13,6 +13,7 @@ import scala.Tuple3;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 public class Main {
   public static void main(String[] args) throws ClassNotFoundException {
@@ -31,11 +32,23 @@ public class Main {
     options.put("driver", "org.postgresql.Driver");
     options.put("dbtable", "monthly_revenue");
 
+//    Dataset<Row> rowDataset = sqlContext
+//        .read()
+//        .format("jdbc")
+//        .options(options)
+//        .load();
+
     Dataset<Row> rowDataset = sqlContext
         .read()
-        .format("jdbc")
-        .options(options)
-        .load();
+            .jdbc(options.get("url"),
+                    options.get("dbtable"),
+            "(ctid::text::point)[0]::bigint",
+                    0, 168208, 170,
+                    new Properties(){{
+                        setProperty("driver", "org.postgresql.Driver");
+                        setProperty("fetchSize", "1000");
+                    }}
+            );
 
     JavaRDD<Row> rowJavaRDD = rowDataset.javaRDD();
 
