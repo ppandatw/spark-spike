@@ -1,5 +1,7 @@
 package spark.spike;
 
+import com.datastax.driver.core.Session;
+import com.datastax.spark.connector.cql.CassandraConnector;
 import com.datastax.spark.connector.japi.CassandraJavaUtil;
 import com.datastax.spark.connector.japi.CassandraRow;
 import com.datastax.spark.connector.japi.rdd.CassandraJavaRDD;
@@ -29,11 +31,11 @@ public class Main {
 
         CassandraJavaRDD<CassandraRow> rowJavaRDD = CassandraJavaUtil
                 .javaFunctions(javaSparkContext)
-                .cassandraTable("insights", "monthly_revenue");
-
+                .cassandraTable("sales_data", "monthly_revenue")
+                .select("mtd_date");
         //Verify whether cassandra is connected or not
         rowJavaRDD
-                .take(10)
+                .collect()
                 .forEach(System.out::println);
 
 

@@ -10,19 +10,19 @@ repositories {
 }
 
 dependencies {
-    compile group: 'org.apache.spark', name: 'spark-core_2.10', version: '1.6.2'
-    compile group: 'org.apache.spark', name: 'spark-streaming_2.10', version: '1.6.2'
-    compile group: 'org.apache.spark', name: 'spark-sql_2.10', version: '2.2.0'
+    compile group: 'org.apache.spark', name: 'spark-core_2.11', version: '2.2.0'
+    compile group: 'org.apache.spark', name: 'spark-streaming_2.11', version: '2.2.0'
+    compile group: 'org.apache.spark', name: 'spark-sql_2.11', version: '2.2.0'
 //    compile group: 'org.postgresql', name: 'postgresql', version: '42.1.4'
-    compile group: 'com.datastax.spark', name: 'spark-cassandra-connector_2.10', version: '2.0.5'
+    compile group: 'com.datastax.spark', name: 'spark-cassandra-connector_2.11', version: '2.0.0-M3'
 //    compile group: 'com.datastax.spark', name: 'spark-cassandra-connector-java_2.10', version: '1.5.2'
-    compile "com.datastax.cassandra:cassandra-driver-core:3.3.0:shaded"
+//    compile "com.datastax.cassandra:cassandra-driver-core:3.3.0:shaded"
 //    compile(group: "com.datastax.cassandra", name: "cassandra-driver-mapping", version: "3.3.0") {
 //        exclude group: "com.datastax.cassandra", module: "cassandra-driver-core"
 //    }
-    compile(group: 'com.datastax.spark', name: 'spark-cassandra-connector_2.10', version: '2.0.5') {
-        exclude group: "com.datastax.cassandra", module: "cassandra-driver-core"
-    }
+//    compile(group: 'com.datastax.spark', name: 'spark-cassandra-connector_2.10', version: '2.0.0-M3') {
+//        exclude group: "com.datastax.cassandra", module: "cassandra-driver-core"
+//    }
 //    compile(group: 'com.datastax.spark', name: 'spark-cassandra-connector-java_2.10', version: '1.5.2') {
 //        exclude group: "com.datastax.cassandra", module: "cassandra-driver-core"
 //    }
