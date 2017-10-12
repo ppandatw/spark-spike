@@ -10,11 +10,11 @@ import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
 import scala.Tuple3;
+import spark.spike.model.result.SalesRow;
 
 import java.util.Date;
 import java.util.PriorityQueue;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 public class Main {
 
@@ -31,18 +31,21 @@ public class Main {
                 .sparkContext(new SparkContext(sparkConf))
                 .getOrCreate()
                 .sqlContext();
-
+    
+        Properties connectionProperties = new Properties() {{
+            setProperty("driver", "org.postgresql.Driver");
+            setProperty("fetchSize", "1000");
+        }};
+        String jdbcUrl = "jdbc:postgresql://postgres:5432/testDB?user=test&password=test";
+    
         Dataset<Row> rowDataset = sqlContext
-                .read()
-                .jdbc("jdbc:postgresql://postgres:5432/testDB?user=test&password=test",
-                        "monthly_revenue_large",
-                        "id",
-                        0, 83865972L, 500,
-                        new Properties() {{
-                            setProperty("driver", "org.postgresql.Driver");
-                            setProperty("fetchSize", "1000");
-                        }}
-                );
+                                          .read()
+                                          .jdbc(jdbcUrl,
+                                                  "monthly_revenue",
+                                                  "id",
+                                                  0, 10000L, 5,
+                                                  connectionProperties
+                                          );
 
         JavaRDD<Row> rowJavaRDD = rowDataset.javaRDD();
 
@@ -64,8 +67,10 @@ public class Main {
             }
             return q1;
         };
-
-        rowJavaRDD.mapToPair(row -> {
+    
+        JavaRDD<SalesRow> salesRowJavaRDD =
+                rowJavaRDD
+                        .mapToPair(row -> {
             Tuple3<String, String, String> key = new Tuple3<>(row.getString(0), row.getString(1), row.getString(3));
             Double value = row.getDouble(5);
             return new Tuple2<>(key, value);
@@ -83,20 +88,27 @@ public class Main {
                         seqFunc,
                         combFunc
                 )
-                .map(result -> {
-                            PriorityQueue<Tuple2<String, Double>> top3Departments = result._2();
-//                            String stringRepresentationOfTop3Dept = top3Departments.stream()
-//                                    .map(dept -> " dept : " + dept._1() + " , "
-//                                            + "amount : " + dept._2()
-//                                    )
-//                                    .collect(Collectors.joining(","));
-
-                            return "customer_no = " + result._1()._1() + ", "
-                                    + "store_no = " + result._1()._2()
-                                    + " : " + top3Departments;
-                        }
-                )
-                .collect()
-                .forEach(System.out::println);
+                .flatMap(result -> {
+                    String customerNumber = result._1()._1();
+                    String storeNumber = result._1()._2();
+                
+                    PriorityQueue<Tuple2<String, Double>> top3Departments = result._2();
+                
+                    return top3Departments
+                                   .stream()
+                                   .map(dept -> {
+                                       SalesRow row = new SalesRow();
+                                       row.setCustomer_number(customerNumber)
+                                               .setStore_number(storeNumber)
+                                               .setDepartment_number(dept._1())
+                                               .setTotal_amount(dept._2());
+                                       return row;
+                                   })
+                                   .iterator();
+                });
+    
+        Dataset<Row> resultDataFrame = sqlContext.createDataFrame(salesRowJavaRDD, SalesRow.class);
+        resultDataFrame.write()
+                .jdbc(jdbcUrl, "result", connectionProperties);
     }
 }
