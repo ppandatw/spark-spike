@@ -6,7 +6,7 @@ do
     sleep 2
 done
 
-export SPARK_SUBMIT_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=4000
+export SPARK_SUBMIT_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=4000
 
 /spark-master/spark/bin/spark-submit \
     --files /src/main/resources/log4j.properties \
