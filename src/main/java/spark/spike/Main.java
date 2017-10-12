@@ -1,53 +1,70 @@
 package spark.spike;
 
+import java.math.BigDecimal;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.util.Date;
 import org.apache.spark.SparkConf;
-import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SQLContext;
-import scala.Tuple2;
+import org.apache.spark.api.java.JavaSparkContext;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.StreamSupport;
+import static java.time.LocalDate.parse;
+import static java.time.ZoneId.systemDefault;
+import static java.time.temporal.ChronoField.DAY_OF_MONTH;
+import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
+import static java.time.temporal.ChronoField.YEAR;
+import static java.time.temporal.TemporalAdjusters.firstDayOfMonth;
 
 public class Main {
-	public static void main(String[] args) throws ClassNotFoundException {
-		SparkConf sparkConf =
-				new SparkConf()
-						.setAppName("Square Batch job")
-						.setMaster("spark://spark-master:7077");//	.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
-		
-		SQLContext sqlContext = new SQLContext(new SparkContext(sparkConf));
-		Map<String, String> options = new HashMap<>();
-		options.put("url", "jdbc:postgresql://postgres:5432/testDB?user=test&password=test");
-		options.put("dbtable", "ord_rev");
-		options.put("driver", "org.postgresql.Driver");
-		
-		Dataset<Row> rowDataset = sqlContext.load("jdbc", options);
-		
-		JavaRDD<Row> rowJavaRDD = rowDataset.javaRDD();
-		long count = rowJavaRDD.count();
-		System.out.println("Number of rows in the view : " + count);
-		
-		rowJavaRDD.mapToPair(row -> {
-			String customer = "customer - " + row.getString(0) + "::" + row.getString(1);
-			return new Tuple2<String, Double>(customer, row.getDouble(3));
-		})
-				.groupByKey()
-				.map((Tuple2<String, Iterable<Double>> tuple) -> new Tuple2(tuple._1(),
-																				   StreamSupport.stream(tuple._2().spliterator(), false)
-																						   .max(Double::compare)
-																						   .orElse(-1.1)
-				))
-//				.take(10)
-//				.forEach(System.out::println);
-				.collect()
-				.forEach(System.out::println);
-		
-		
-//		new SparkBatchJobSquare(sparkConf, 1000)
-//				.run();
-	}
+
+    private static final DateTimeFormatter DATE_FORMATTER = new DateTimeFormatterBuilder()
+        .appendValue(YEAR, 4)
+        .appendValue(MONTH_OF_YEAR, 2)
+        .appendValue(DAY_OF_MONTH, 2)
+        .toFormatter();
+
+    public static void main(String[] args) {
+        SparkConf conf = new SparkConf()
+            .setMaster("local")
+            .setAppName("abcd");
+
+        JavaSparkContext sparkContext = new JavaSparkContext(conf);
+        JavaRDD<String> rdd = sparkContext
+            .textFile("/Users/ritabratamoitra/Projects/Learning/Spark-Spike/spark-spike/src/main/resources/MDW_hcmrevenue_v001_20160531_20160602_024440.csv", 0);
+
+        String first = rdd.first();
+        rdd.filter(row -> !row.equals(first))
+            .map(Main::func)
+            .take(10)
+            .forEach(System.out::println);
+    }
+
+    private static SalesData func(String v1) {
+        String[] split = v1.split("\t");
+
+        return new SalesData().builder()
+            .customer_Number(split[1])
+            .store_Number(split[2])
+            .mtd_Date(toFirstDayOfMonth(removeQuotes(split[4])))
+            .department(Integer.parseInt(removeQuotes(split[7])))
+            .invoice_type(Integer.parseInt(removeQuotes(split[8])))
+            .mtdAmount(BigDecimal.valueOf(Long.parseLong(removeQuotes(split[8]))))
+            .build();
+    }
+
+    private static String removeQuotes(String s) {
+        return s.replaceAll("\\\"", "");
+    }
+
+    private static Date toFirstDayOfMonth(String dateAsString) {
+        ZonedDateTime beginOfMonth = toZonedDateTime(dateAsString).with(firstDayOfMonth());
+        return Date.from(beginOfMonth.toInstant());
+    }
+
+    private static ZonedDateTime toZonedDateTime(String dateAsString) {
+        return parse(dateAsString, DATE_FORMATTER)
+            .atStartOfDay(systemDefault());
+    }
+
 }
