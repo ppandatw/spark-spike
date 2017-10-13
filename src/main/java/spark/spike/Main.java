@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
@@ -66,29 +67,36 @@ public class Main {
         JavaRDD<String> salesData = javaSparkContext
             .textFile("/src/main/resources/MDW_hcmrevenue_v001_20160531_20160602_024440.csv", 0);
 
+
         String first = salesData.first();
         JavaPairRDD<String, BigDecimal> salesMapping = salesData.filter(row -> !row.equals(first))
-            .mapToPair(Main::func);
+            .mapToPair(Main::mapToSalesData);
+
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!! Sales Mapping count -" + salesMapping.count());
+        List<Tuple2<String, BigDecimal>> take = salesMapping.take(1);
+
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!! Sales Mapping first key -" + take.get(0)._1());
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!! Sales Mapping first value     -" + take.get(0)._2());
 
         JavaPairRDD<String, Tuple2<String, BigDecimal>> branchToSales = branchMapping.join(salesMapping);
-        System.out.println("branch to sales count " + branchToSales.count());
+        System.out.println("------------------- branch to sales count " + branchToSales.count());
 
         JavaPairRDD<String, Tuple2<String, BigDecimal>> rdd = branchToSales.reduceByKey((Function2<Tuple2<String, BigDecimal>, Tuple2<String, BigDecimal>,
             Tuple2<String, BigDecimal>>) (v1, v2) ->
             new Tuple2<>(v1._1, v1._2().add(v2._2())));
-        System.out.println("Count " + rdd.count());
+        System.out.println("+++++++++++++++++++++ Count " + rdd.count());
     }
 
-    private static Tuple2<String, BigDecimal> func(String v1) {
+    private static Tuple2<String, BigDecimal> mapToSalesData(String v1) {
         String[] split = v1.split("\t");
 
         SalesData salesData = new SalesData().builder()
-            .customer_Number(removeLeadingZero(split[1]))
-            .store_Number(removeLeadingZero(split[2]))
+            .customer_Number(removeLeadingZero(removeQuotes(split[1])))
+            .store_Number(removeLeadingZero(removeQuotes(split[2])))
 //            .mtd_Date(toFirstDayOfMonth(removeQuotes(split[4])))
 //            .department(Integer.parseInt(removeQuotes(split[7])))
 //            .invoice_type(Integer.parseInt(removeQuotes(split[8])))
-            .mtdAmount(BigDecimal.valueOf(Long.parseLong(removeQuotes(split[8]))))
+            .mtdAmount(BigDecimal.valueOf(Long.parseLong(removeQuotes(split[13]))))
             .build();
         return new Tuple2<>(salesData.getStore_Number() + "_" + salesData.getCustomer_Number(), salesData.getMtdAmount());
 

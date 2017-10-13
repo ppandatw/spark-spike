@@ -30,6 +30,7 @@ services:
     volumes:
       - ../build:/usr/build
       - spark:/spark
+      - ../src/main/resources:/src/main/resources
     environment:
       - INIT_DAEMON_STEP=setup_spark
       - "constraint:node==spark-master"
@@ -46,6 +47,9 @@ services:
     environment:
       - "SPARK_MASTER=spark://spark-master:7077"
       - "constraint:node==spark-master"
+    volumes:
+      - ../src/main/resources:/src/main/resources
+
 
   spark-worker1:
     image: bde2020/spark-worker:2.2.0-hadoop2.7
@@ -59,6 +63,8 @@ services:
     environment:
       - "SPARK_MASTER=spark://spark-master:7077"
       - "constraint:node==spark-master"
+    volumes:
+      - ../src/main/resources:/src/main/resources
 
   spark-worker2:
     image: bde2020/spark-worker:2.2.0-hadoop2.7
@@ -72,6 +78,8 @@ services:
     environment:
       - "SPARK_MASTER=spark://spark-master:7077"
       - "constraint:node==spark-master"
+    volumes:
+      - ../src/main/resources:/src/main/resources
 
   spark-batchjob-1:
     image: java:8-jre
