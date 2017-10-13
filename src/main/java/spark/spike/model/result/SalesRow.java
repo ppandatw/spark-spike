@@ -65,4 +65,18 @@ public class SalesRow implements Serializable {
 		result = 31 * result + total_amount.hashCode();
 		return result;
 	}
+	
+	public static String getColumnNames() {
+		return " ( customer_number, store_number, department_number, total_amount ) ";
+	}
+	
+	@Override
+	public String toString() {
+		return " ( '" + customer_number
+					   + "' , '" + store_number
+					   + "' , '" + department_number
+					   + "' , " + total_amount +
+					   " )";
+		
+	}
 }

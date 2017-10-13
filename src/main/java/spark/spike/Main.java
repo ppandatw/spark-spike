@@ -9,15 +9,17 @@ import scala.Tuple2;
 import scala.Tuple3;
 import spark.spike.model.result.SalesRow;
 
-import java.util.Date;
-import java.util.PriorityQueue;
-import java.util.Properties;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class Main {
 
     private static final int TOP_ELEMENTS_COUNT = 3;
-
-    public static void main(String[] args) throws ClassNotFoundException {
+    
+    public static void main(String[] args) throws ClassNotFoundException, SQLException {
         SparkConf sparkConf =
                 new SparkConf()
                         .setAppName("Job - " + new Date())
@@ -103,10 +105,32 @@ public class Main {
                                    })
                                    .iterator();
                 });
-    
-        Dataset<Row> resultDataFrame = sqlContext.createDataFrame(salesRowJavaRDD, SalesRow.class);
-        resultDataFrame.write()
+        
+        
+        sqlContext.createDataFrame(Collections.emptyList(), SalesRow.class)
+                .write()
                 .mode(SaveMode.Overwrite)
                 .jdbc(jdbcUrl, "result", connectionProperties);
+        
+        long count = salesRowJavaRDD.count();
+        System.out.println("Count = " + count);
+        
+        
+        salesRowJavaRDD
+                .coalesce((int) (count / 1000) + 1)
+                .foreachPartition(rows -> {
+                    String query = "INSERT INTO result "
+                                           + SalesRow.getColumnNames()
+                                           + " VALUES ";
+                    query += StreamSupport.stream(Spliterators.spliteratorUnknownSize(rows, 0), false)
+                                     .map(SalesRow::toString)
+                                     .collect(Collectors.joining(" , "));
+                    
+                    Class.forName("org.postgresql.Driver");
+                    DriverManager
+                            .getConnection(jdbcUrl)
+                            .createStatement()
+                            .executeUpdate(query);
+                });
     }
 }
