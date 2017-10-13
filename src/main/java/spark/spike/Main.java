@@ -4,10 +4,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SQLContext;
-import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.*;
 import scala.Tuple2;
 import scala.Tuple3;
 import spark.spike.model.result.SalesRow;
@@ -109,6 +106,7 @@ public class Main {
     
         Dataset<Row> resultDataFrame = sqlContext.createDataFrame(salesRowJavaRDD, SalesRow.class);
         resultDataFrame.write()
+                .mode(SaveMode.Overwrite)
                 .jdbc(jdbcUrl, "result", connectionProperties);
     }
 }
