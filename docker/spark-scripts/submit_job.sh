@@ -14,5 +14,6 @@ export SPARK_SUBMIT_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,a
     --conf 'spark.driver.extraJavaOptions=-Dlog4j.configuration=file:///src/main/resources/log4j.properties' \
     --class "$MAIN_CLASS" \
     --master spark://spark-master:7077 \
+    --executor-memory 2g \
     --jars $(jarFiles=(/usr/build/libs/*.jar); IFS=,; echo "${jarFiles[*]}")  \
     /usr/build/libs/spark-spikes-1.0S.jar
