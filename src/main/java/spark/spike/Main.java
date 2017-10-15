@@ -33,7 +33,7 @@ public class Main {
     
         Properties connectionProperties = new Properties() {{
             setProperty("driver", "org.postgresql.Driver");
-            setProperty("fetchSize", "1000");
+//            setProperty("fetchSize", "1000");
         }};
         String jdbcUrl = "jdbc:postgresql://postgres:5432/testDB?user=test&password=test";
     
@@ -42,7 +42,7 @@ public class Main {
                                           .jdbc(jdbcUrl,
                                                   "monthly_revenue",
                                                   "id",
-                                                  0, 10000L, 5,
+                                                  0, 83864999L, 1000,
                                                   connectionProperties
                                           );
 
@@ -69,6 +69,7 @@ public class Main {
     
         JavaRDD<SalesRow> salesRowJavaRDD =
                 rowJavaRDD
+                        .coalesce(30, false)
                         .mapToPair(row -> {
             Tuple3<String, String, String> key = new Tuple3<>(row.getString(0), row.getString(1), row.getString(3));
             Double value = row.getDouble(5);
