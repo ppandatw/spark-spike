@@ -66,7 +66,6 @@ public class Main {
         JavaRDD<String> salesData = javaSparkContext
             .textFile("/src/main/resources/MDW_hcmrevenue_v001_20160531_20160602_024440.csv", 0);
 
-
         String first = salesData.first();
         JavaPairRDD<String, BigDecimal> salesMapping = salesData.filter(row -> !row.equals(first))
             .mapToPair(Main::mapToSalesData);
@@ -96,10 +95,7 @@ public class Main {
         SalesData salesData = new SalesData().builder()
             .customer_Number(removeLeadingZero(removeQuotes(split[1])))
             .store_Number(removeLeadingZero(removeQuotes(split[2])))
-//            .mtd_Date(toFirstDayOfMonth(removeQuotes(split[4])))
-//            .department(Integer.parseInt(removeQuotes(split[7])))
-//            .invoice_type(Integer.parseInt(removeQuotes(split[8])))
-            .mtdAmount(BigDecimal.valueOf(Long.parseLong(removeQuotes(split[13]))))
+            .mtdAmount(BigDecimal.valueOf(Float.parseFloat(removeQuotes(split[13]))))
             .build();
         return new Tuple2<>(salesData.getStore_Number() + "_" + salesData.getCustomer_Number(), salesData.getMtdAmount());
 
