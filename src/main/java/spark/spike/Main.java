@@ -43,14 +43,24 @@ public class Main {
             .groupByKey()
             .mapToPair(Main::aggregateAmountByBranch);
 
-        printBranchAndCustomerToAggregatedAmounts(aggregatedAmountByBranchMapping);
+        JavaPairRDD<BigDecimal, StoreBranch> reversedBranchToAmount = aggregatedAmountByBranchMapping
+            .mapToPair((PairFunction<Tuple2<StoreBranch, BigDecimal>, BigDecimal, StoreBranch>) tuple2 -> new Tuple2<>(tuple2._2(), tuple2._1()))
+            .sortByKey();
+
+        long count = reversedBranchToAmount.count();
+
+        JavaPairRDD<Long, Tuple2<BigDecimal, StoreBranch>> rdd = reversedBranchToAmount.zipWithIndex()
+            .mapToPair(tuple2 -> new Tuple2<>(tuple2._2(), tuple2._1()));
+
+        Tuple2<BigDecimal, StoreBranch> tuple2 = rdd.lookup(count / 2).get(0);
+        System.out.println(tuple2._1() + " ------------------------------ " + tuple2._2().getStoreNumber() + "++++++++++++++++" + tuple2._2.getBranch());
     }
 
     private static void printBranchAndCustomerToAggregatedAmounts(
-        JavaPairRDD<StoreBranch, BigDecimal> mappedToStoreAmounts) {
-        mappedToStoreAmounts.take(10).forEach(mapping -> System.out.println(mapping._1().getBranch() + " ///"
-            + mapping._1().getStoreNumber() + " ///"
-            + mapping._2()));
+        JavaPairRDD<BigDecimal, StoreBranch> mappedToStoreAmounts) {
+        mappedToStoreAmounts.take(10).forEach(mapping -> System.out.println(mapping._2().getBranch() + " ///"
+            + mapping._2().getStoreNumber() + " ///"
+            + mapping._1()));
     }
 
     private static JavaPairRDD<CustomerIdentifier, BigDecimal> eliminateHeadersFromTextFile(JavaRDD<String> salesData) {
