@@ -1,9 +1,6 @@
 package spark.spike;
 
 import java.math.BigDecimal;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.util.List;
 import java.util.Properties;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -13,17 +10,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 import scala.Tuple2;
 
-import static java.time.temporal.ChronoField.DAY_OF_MONTH;
-import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
-import static java.time.temporal.ChronoField.YEAR;
-
 public class Main {
-
-    private static final DateTimeFormatter DATE_FORMATTER = new DateTimeFormatterBuilder()
-        .appendValue(YEAR, 4)
-        .appendValue(MONTH_OF_YEAR, 2)
-        .appendValue(DAY_OF_MONTH, 2)
-        .toFormatter();
 
     public static void main(String[] args) {
         SparkConfig sparkConfig = new SparkConfig();
@@ -50,9 +37,9 @@ public class Main {
         JavaPairRDD<CustomerIdentifier, BigDecimal> salesDataWithoutHeaders = eliminateHeadersFromTextFile(salesData);
 
         JavaPairRDD<CustomerIdentifier, Tuple2<String, BigDecimal>> branchToSalesMapping = branchMapping.join(salesDataWithoutHeaders);
-        JavaPairRDD<CustomerBranch, BigDecimal> storeToCustomerToBranchMapping = branchToSalesMapping.mapToPair(Main::mapToBranch);
+        JavaPairRDD<StoreBranch, BigDecimal> storeToBranchMapping = branchToSalesMapping.mapToPair(Main::mapToBranch);
 
-        JavaPairRDD<CustomerBranch, BigDecimal> aggregatedAmountByBranchMapping = storeToCustomerToBranchMapping
+        JavaPairRDD<StoreBranch, BigDecimal> aggregatedAmountByBranchMapping = storeToBranchMapping
             .groupByKey()
             .mapToPair(Main::aggregateAmountByBranch);
 
@@ -60,10 +47,9 @@ public class Main {
     }
 
     private static void printBranchAndCustomerToAggregatedAmounts(
-        JavaPairRDD<CustomerBranch, BigDecimal> mappedToStoreAmounts) {
+        JavaPairRDD<StoreBranch, BigDecimal> mappedToStoreAmounts) {
         mappedToStoreAmounts.take(10).forEach(mapping -> System.out.println(mapping._1().getBranch() + " ///"
-            + mapping._1().getCustomerIdentifier().getCustomerNumber() + " ///"
-            + mapping._1().getCustomerIdentifier().getStoreNumber() + " ///"
+            + mapping._1().getStoreNumber() + " ///"
             + mapping._2()));
     }
 
@@ -73,8 +59,8 @@ public class Main {
             .mapToPair(Main::mapToSalesData);
     }
 
-    private static Tuple2<CustomerBranch, BigDecimal> aggregateAmountByBranch(
-        Tuple2<CustomerBranch, Iterable<BigDecimal>> tuple2) {
+    private static Tuple2<StoreBranch, BigDecimal> aggregateAmountByBranch(
+        Tuple2<StoreBranch, Iterable<BigDecimal>> tuple2) {
         BigDecimal totalAmount = new BigDecimal(0);
 
         for (BigDecimal amount : tuple2._2()) {
@@ -103,8 +89,8 @@ public class Main {
         return s.replaceAll("\\\"", "");
     }
 
-    private static Tuple2<CustomerBranch, BigDecimal> mapToBranch(
+    private static Tuple2<StoreBranch, BigDecimal> mapToBranch(
         Tuple2<CustomerIdentifier, Tuple2<String, BigDecimal>> v1) {
-        return new Tuple2<>(new CustomerBranch(v1._1(), v1._2()._1()), v1._2()._2());
+        return new Tuple2<>(new StoreBranch(v1._1().getStoreNumber(), v1._2()._1()), v1._2()._2());
     }
 }
