@@ -17,54 +17,54 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class SparkBatchJobSquare {
-	
+
 	private JavaStreamingContext sparkStreamingContext;
-	
+
 	public SparkBatchJobSquare(SparkConf sparkConf, int durationInMillis) {
 		sparkStreamingContext = new JavaStreamingContext(sparkConf, new Duration(durationInMillis));
 	}
-	
+
 	public void run() {
 		prepareSteps();
 		sparkStreamingContext.start();
 		System.out.println("Job started");
 		sparkStreamingContext.awaitTermination();
 	}
-	
+
 	private void prepareSteps() {
 		List<Integer> list = IntStream
 									 .range(1, 1000)
 									 .boxed()
 									 .collect(Collectors.toList());
-		
+
 		Queue<JavaRDD<Integer>> rddQueue = new LinkedList<>();
 		for (int i = 0; i < 30; i++) {
 			JavaRDD<Integer> parallelizedStream = sparkStreamingContext.sparkContext().parallelize(list);
 			rddQueue.add(parallelizedStream);
 		}
-		
+
 		// Create the QueueInputDStream and use it do some processing
 		JavaDStream<Integer> inputStream = sparkStreamingContext.queueStream(rddQueue);
-		
+
 		JavaPairDStream<Integer, Integer> mappedStream = inputStream.mapToPair(
 				i -> new Tuple2<>(i, i * i));
-		
+
 		AtomicReference<Tuple2<Integer, Integer>> capture = new AtomicReference<>();
-		
+
 		mappedStream.filter(pair -> {
 			System.out.println(pair);
 			return true;
 		});
-		
+
 		mappedStream.print(5);
 		mappedStream.foreachRDD(javaPairRDD -> {
 			javaPairRDD.collect();
 			return null;
-			
+
 		});
 	}
-	
+
 	static void print(JavaPairRDD<Integer, Integer> pairRDD) {
-	
+
 	}
 }

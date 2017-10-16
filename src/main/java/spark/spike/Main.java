@@ -12,7 +12,6 @@ import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -81,10 +80,14 @@ public class Main {
         JavaPairRDD<String, Tuple2<String, BigDecimal>> branchToSales = branchMapping.join(salesMapping);
         System.out.println("------------------- branch to sales count " + branchToSales.count());
 
-        JavaPairRDD<String, Tuple2<String, BigDecimal>> rdd = branchToSales.reduceByKey((Function2<Tuple2<String, BigDecimal>, Tuple2<String, BigDecimal>,
+        /*JavaPairRDD<String, Tuple2<String, BigDecimal>> rdd = branchToSales.reduceByKey((Function2<Tuple2<String, BigDecimal>, Tuple2<String, BigDecimal>,
             Tuple2<String, BigDecimal>>) (v1, v2) ->
-            new Tuple2<>(v1._1, v1._2().add(v2._2())));
-        System.out.println("+++++++++++++++++++++ Count " + rdd.count());
+            new Tuple2<>(v1._1, v1._2().add(v2._2())));*/
+
+        JavaPairRDD<String, BigDecimal> storeToCustomerToBranch = branchToSales.mapToPair(Main::mapToBranch);
+        storeToCustomerToBranch.reduceByKey(BigDecimal::add);
+
+        System.out.println("+++++++++++++++++++++ Count " + storeToCustomerToBranch.count());
     }
 
     private static Tuple2<String, BigDecimal> mapToSalesData(String v1) {
@@ -115,4 +118,7 @@ public class Main {
             .atStartOfDay(systemDefault());
     }
 
+    private static Tuple2<String, BigDecimal> mapToBranch(Tuple2<String, Tuple2<String, BigDecimal>> v1) {
+        return new Tuple2<>(v1._1() + "_" + v1._2()._1(), v1._2()._2());
+    }
 }
