@@ -5,6 +5,8 @@ services:
   cassandra:
     container_name: cassandra
     image: "cassandra:3.0.12"
+    volumes:
+          - ./cassandra_data:/var/lib/cassandra
     ports:
       - "9042:9042"
 

@@ -45,9 +45,6 @@ public class Main {
         System.out.println("Fetching data finished" + LocalDateTime.now());
 
 
-//TODO : following code works with postgres
-
-////        PriorityQueue<Tuple2<String, Double>> queue = new PriorityQueue<>(TOP_ELEMENTS_COUNT, Comparator.comparing(Tuple2::_2));
         PriorityQueue<Tuple2<String, Double>> queue = new PriorityQueue<>(TOP_ELEMENTS_COUNT, DepartmentComparator.instance);
 
         Function2<PriorityQueue<Tuple2<String, Double>>, Tuple2<String, Double>, PriorityQueue<Tuple2<String, Double>>> seqFunc = (q, v) -> {
@@ -88,12 +85,6 @@ public class Main {
                 )
                 .map(result -> {
                             PriorityQueue<Tuple2<String, Double>> top3Departments = result._2();
-//                            String stringRepresentationOfTop3Dept = top3Departments.stream()
-//                                    .map(dept -> " dept : " + dept._1() + " , "
-//                                            + "amount : " + dept._2()
-//                                    )
-//                                    .collect(Collectors.joining(","));
-
                             return new TopDepartments(result._1()._1(), result._1()._2(), String.valueOf(top3Departments));
                         }
                 );
