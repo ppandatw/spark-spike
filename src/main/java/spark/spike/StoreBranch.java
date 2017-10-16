@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-public class StoreBranch implements Serializable{
+class StoreBranch implements Serializable {
     private String storeNumber;
     private String branch;
 }

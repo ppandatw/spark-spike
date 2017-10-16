@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode
 @AllArgsConstructor
 @NoArgsConstructor
-public class CustomerIdentifier implements Serializable {
+class CustomerIdentifier implements Serializable {
     private String storeNumber;
     private String customerNumber;
 }

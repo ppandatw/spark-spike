@@ -7,8 +7,8 @@ import org.apache.spark.api.java.JavaSparkContext;
 import scala.Serializable;
 import scala.Tuple2;
 
-public class SalesDataImporter implements Serializable{
-    public JavaPairRDD<CustomerIdentifier, BigDecimal> importFile(JavaSparkContext javaSparkContext) {
+class SalesDataImporter implements Serializable{
+    JavaPairRDD<CustomerIdentifier, BigDecimal> importFile(JavaSparkContext javaSparkContext) {
         JavaRDD<String> salesData = javaSparkContext
             .textFile("/src/main/resources/MDW_hcmrevenue_v001_20160531_20160602_024440.csv", 0);
 
@@ -37,7 +37,7 @@ public class SalesDataImporter implements Serializable{
     }
 
     private String removeQuotes(String s) {
-        return s.replaceAll("\\\"", "");
+        return s.replaceAll("\"", "");
     }
 
 }

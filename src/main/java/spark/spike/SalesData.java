@@ -14,7 +14,7 @@ import lombok.ToString;
 @ToString
 @Getter
 @AllArgsConstructor
-public class SalesData implements Serializable {
+class SalesData implements Serializable {
     private String customer_Number;
     private String store_Number;
     private Date mtd_Date;

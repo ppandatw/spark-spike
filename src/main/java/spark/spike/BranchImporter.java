@@ -1,6 +1,5 @@
 package spark.spike;
 
-import java.awt.SecondaryLoop;
 import java.util.Properties;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -10,9 +9,9 @@ import org.apache.spark.sql.SQLContext;
 import scala.Serializable;
 import scala.Tuple2;
 
-public class BranchImporter implements Serializable{
+class BranchImporter implements Serializable {
 
-    public JavaPairRDD<CustomerIdentifier, String> importBranchMapping(SQLContext sqlContext) {
+    JavaPairRDD<CustomerIdentifier, String> importBranchMapping(SQLContext sqlContext) {
         JavaRDD<Row> javaRDD = sqlContext
             .read()
             .option("fetchSize", "1000")
